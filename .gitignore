@@ -1,0 +1,32 @@
+# dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# build artifacts
+services/web/dist/
+*.log
+npm-debug.log*
+
+# environment
+.env
+.env.local
+
+# model artifacts
+services/api/models/*.joblib
+services/api/models/*.pkl
+services/api/models/*.pt
+services/api/models/*.zip
+
+# ml training caches
+services/api/data/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

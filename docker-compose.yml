@@ -1,0 +1,21 @@
+services:
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: aura-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aura}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aura_dev_pw}
+      POSTGRES_DB: ${POSTGRES_DB:-aura}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - aura-db-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aura} -d ${POSTGRES_DB:-aura}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  aura-db-data:
