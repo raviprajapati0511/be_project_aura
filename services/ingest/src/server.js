@@ -1,7 +1,7 @@
-// AURA ingestion service - Express + Socket.io + TimescaleDB.
+// AURA ingestion service - Express + Socket.io + MySQL.
 //
 // Accepts telemetry samples from the simulator over HTTP POST /ingest,
-// inserts into the TimescaleDB hypertable, and broadcasts each sample
+// inserts into the MySQL telemetry table, and broadcasts each sample
 // to connected dashboard clients over Socket.io.
 
 import express from "express";
@@ -9,9 +9,8 @@ import fs from "node:fs";
 import { createServer } from "node:http";
 import path from "node:path";
 import { Server } from "socket.io";
-import pg from "pg";
 
-const { Pool } = pg;
+import mysql from "mysql2/promise";
 
 function loadRootEnv() {
   const candidates = [
@@ -35,13 +34,18 @@ function loadRootEnv() {
 loadRootEnv();
 
 const PORT = Number(process.env.INGEST_PORT ?? 4000);
-const DATABASE_URL =
-  process.env.DATABASE_URL ?? "postgres://aura:aura_dev_pw@localhost:5433/aura";
+const databaseUrl = new URL(
+  process.env.DATABASE_URL ?? "mysql://root@localhost:3306/fitness_db",
+);
 
-const pool = new Pool({
-  connectionString: DATABASE_URL,
-  connectionTimeoutMillis: 2000,
-  max: 5,
+const pool = mysql.createPool({
+  host: databaseUrl.hostname,
+  port: Number(databaseUrl.port || 3306),
+  user: decodeURIComponent(databaseUrl.username),
+  password: decodeURIComponent(databaseUrl.password),
+  database: databaseUrl.pathname.slice(1),
+  connectTimeout: 2000,
+  connectionLimit: 5,
 });
 
 const app = express();
@@ -117,7 +121,7 @@ const INSERT_SQL = `
   INSERT INTO vehicle_telemetry
     (time, vehicle_id, pack_voltage, pack_current, soc_reported,
      cell_temp_max, speed_kmh, odometer_km, latitude, longitude)
-  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+  VALUES (?,?,?,?,?,?,?,?,?,?)
 `;
 
 function socketPayload(row) {
@@ -143,7 +147,7 @@ app.post("/ingest", async (req, res) => {
   }
 
   try {
-    await pool.query(INSERT_SQL, [
+    await pool.execute(INSERT_SQL, [
       row.time,
       row.vehicle_id,
       row.pack_voltage,
@@ -170,7 +174,7 @@ io.on("connection", (socket) => {
 });
 
 httpServer.listen(PORT, () => {
-  const maskedDb = DATABASE_URL.replace(/:[^:@/]+@/, ":***@");
+  const maskedDb = `${databaseUrl.protocol}//${databaseUrl.hostname}:${databaseUrl.port}${databaseUrl.pathname}`;
   console.log(`[ingest] listening on :${PORT} (db=${maskedDb})`);
 });
 

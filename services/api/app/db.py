@@ -2,17 +2,28 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from typing import Any
+from urllib.parse import unquote, urlparse
 
-import psycopg
-from psycopg.rows import dict_row
+import mysql.connector
 
 from .config import DATABASE_URL
 
 
 @contextmanager
 def connection():
-    with psycopg.connect(DATABASE_URL, connect_timeout=2, row_factory=dict_row) as conn:
+    parsed = urlparse(DATABASE_URL)
+    conn = mysql.connector.connect(
+        host=parsed.hostname or "localhost",
+        port=parsed.port or 3306,
+        user=unquote(parsed.username or "root"),
+        password=unquote(parsed.password or ""),
+        database=parsed.path.lstrip("/"),
+        connection_timeout=2,
+    )
+    try:
         yield conn
+    finally:
+        conn.close()
 
 
 def fetch_latest(vehicle_id: str | None = None) -> dict[str, Any] | None:
@@ -25,7 +36,7 @@ def fetch_latest(vehicle_id: str | None = None) -> dict[str, Any] | None:
         LIMIT 1
     """
     with connection() as conn:
-        with conn.cursor() as cur:
+        with conn.cursor(dictionary=True) as cur:
             cur.execute(sql, (vehicle_id, vehicle_id))
             return cur.fetchone()
 
@@ -41,7 +52,7 @@ def fetch_recent(vehicle_id: str | None = None, limit: int = 120) -> list[dict[s
         LIMIT %s
     """
     with connection() as conn:
-        with conn.cursor() as cur:
+        with conn.cursor(dictionary=True) as cur:
             cur.execute(sql, (vehicle_id, vehicle_id, limit))
             rows = cur.fetchall()
     rows.reverse()
@@ -51,6 +62,6 @@ def fetch_recent(vehicle_id: str | None = None, limit: int = 120) -> list[dict[s
 def fetch_vehicle_ids() -> list[str]:
     sql = "SELECT DISTINCT vehicle_id FROM vehicle_telemetry ORDER BY vehicle_id"
     with connection() as conn:
-        with conn.cursor() as cur:
+        with conn.cursor(dictionary=True) as cur:
             cur.execute(sql)
             return [row["vehicle_id"] for row in cur.fetchall()]

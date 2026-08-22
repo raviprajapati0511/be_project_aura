@@ -8,8 +8,9 @@
     "dev": "node --watch src/server.js"
   },
   "dependencies": {
+    "aura-ev-intelligence-poc": "file:../..",
     "express": "^4.19.2",
-    "pg": "^8.12.0",
+    "mysql2": "^3.11.0",
     "socket.io": "^4.7.5"
   }
 }

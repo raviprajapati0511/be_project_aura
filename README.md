@@ -3,13 +3,13 @@
 Local Proof-of-Concept for an EV intelligence platform:
 
 ```text
-Python simulator -> Node.js ingest -> TimescaleDB -> FastAPI ML -> React dashboard
+Python simulator -> Node.js ingest -> MySQL -> FastAPI ML -> React dashboard
 ```
 
 ## Stack
 
 - Data ingestion: Node.js, Express, Socket.io
-- Database: PostgreSQL with TimescaleDB
+- Database: MySQL
 - ML backend: Python 3.10+, FastAPI
 - ML libraries: scikit-learn Isolation Forest, torch BiLSTM, stable-baselines3 DQN
 - Frontend: React, Vite, Tailwind CSS, Mapbox GL JS
@@ -18,7 +18,7 @@ Python simulator -> Node.js ingest -> TimescaleDB -> FastAPI ML -> React dashboa
 
 - Node.js 20+
 - Python 3.10+
-- Docker with `docker compose`
+- MySQL 8+ running locally on port 3306
 - Mapbox access token for the live map
 
 ## Quick Start
@@ -42,7 +42,6 @@ requirements, and trains the small local PoC models into `services/api/models`.
 Use this when you want separate terminals per service.
 
 ```powershell
-docker compose up db
 npm --prefix services/ingest start
 .\.venv\Scripts\python -m uvicorn app.main:app --app-dir services/api --host 0.0.0.0 --port 8000
 npm --prefix services/web run dev
@@ -53,7 +52,7 @@ npm --prefix services/web run dev
 
 | Service | Port | Directory |
 | --- | ---: | --- |
-| TimescaleDB | 5433 | `docker-compose.yml` |
+| MySQL | 3306 | Existing `fitness_db` database |
 | Ingestion API + Socket.io | 4000 | `services/ingest` |
 | FastAPI ML backend | 8000 | `services/api` |
 | React dashboard | 5173 | `services/web` |
