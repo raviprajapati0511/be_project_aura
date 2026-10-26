@@ -21,6 +21,9 @@ from pathlib import Path
 import urllib.request
 import urllib.error
 import json
+import zipfile
+
+import pandas as pd
 
 
 def load_root_env():
@@ -63,6 +66,15 @@ class Telemetry:
     odometer_km: float
     latitude: float
     longitude: float
+    battery_soh: float | None = None
+    motor_temp: float | None = None
+    motor_vibration: float | None = None
+    power_consumption: float | None = None
+    component_health: float | None = None
+    failure_probability: float | None = None
+    rul_score: float | None = None
+    maintenance_type: str | None = None
+    acceleration_mps2: float | None = None
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
@@ -104,6 +116,7 @@ class EVSimulator:
     def step(self):
         self.t += 1
         target_speed = self._target_speed()
+        previous_speed = self.speed
         # Smooth toward target speed (simple low-pass).
         self.speed += (target_speed - self.speed) * 0.25
         if self.speed < 0:
@@ -165,6 +178,7 @@ class EVSimulator:
             odometer_km=round(self.odometer, 3),
             latitude=round(self.lat, 6),
             longitude=round(self.lon, 6),
+            acceleration_mps2=round((self.speed - previous_speed) / 3.6 / (INTERVAL_MS / 1000.0), 4),
         )
 
     def _target_speed(self):
@@ -215,8 +229,56 @@ def send(payload: Telemetry) -> bool:
         return False
 
 
+def replay_kaggle_dataset():
+    """Replay the source dataset through the same validated production ingest API."""
+    root = Path(__file__).resolve().parents[2]
+    archive_path = root / "services" / "api" / "data" / "eviot-predictivemaint-dataset.zip"
+    if not archive_path.exists():
+        raise FileNotFoundError(f"Kaggle dataset archive not found: {archive_path}")
+    with zipfile.ZipFile(archive_path) as archive:
+        with archive.open("EV_Predictive_Maintenance_Dataset_15min.csv") as source:
+            frame = pd.read_csv(source)
+    print(f"[sim] replaying {len(frame):,} Kaggle records across 5 demo vehicles")
+    fleet = [f"EV-AURA-{n:03d}" for n in range(1, 6)]
+    base_lat, base_lon = 37.7749, -122.4194
+    index = 0
+    while True:
+        for _, record in frame.iterrows():
+            vehicle_index = index % len(fleet)
+            angle = (index * 0.013 + vehicle_index * 1.2) % (2 * math.pi)
+            soc = float(record["SoC"])
+            payload = Telemetry(
+                time=datetime.now(timezone.utc).isoformat(),
+                vehicle_id=fleet[vehicle_index],
+                pack_voltage=float(record["Battery_Voltage"]),
+                pack_current=float(record["Battery_Current"]),
+                soc_reported=round(soc * 100.0, 2),
+                cell_temp_max=float(record["Battery_Temperature"]),
+                speed_kmh=float(record["Driving_Speed"]),
+                odometer_km=14253.7 + index * 0.01,
+                latitude=base_lat + 0.035 * math.sin(angle),
+                longitude=base_lon + 0.05 * math.cos(angle),
+                battery_soh=float(record["SoH"]),
+                motor_temp=float(record["Motor_Temperature"]),
+                motor_vibration=float(record["Motor_Vibration"]),
+                power_consumption=float(record["Power_Consumption"]),
+                component_health=float(record["Component_Health_Score"]),
+                failure_probability=float(record["Failure_Probability"]),
+                rul_score=float(record["RUL"]),
+                maintenance_type=f"Type {int(record['Maintenance_Type'])}",
+                acceleration_mps2=round(float(record["Driving_Speed"] - (frame.iloc[max(0, _ - 1)]["Driving_Speed"] if _ > 0 else record["Driving_Speed"])) / 3.6 / 900.0, 4),
+            )
+            if not send(payload):
+                time.sleep(INTERVAL_MS / 1000.0)
+            time.sleep(INTERVAL_MS / 1000.0)
+            index += 1
+
+
 def main():
     print(f"[sim] vehicle={VEHICLE_ID} interval={INTERVAL_MS}ms -> {INGEST_URL}")
+    if os.environ.get("SIM_MODE", "dataset").lower() == "dataset":
+        replay_kaggle_dataset()
+        return
     sim = EVSimulator()
     while True:
         sample = sim.step()

@@ -1,21 +1,19 @@
 services:
   db:
-    image: timescale/timescaledb:latest-pg16
-    container_name: aura-db
+    image: mysql:8.4
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-aura}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aura_dev_pw}
-      POSTGRES_DB: ${POSTGRES_DB:-aura}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-change_me}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-aura_ev}
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
-      - aura-db-data:/var/lib/postgresql/data
+      - aura-mysql-data:/var/lib/mysql
       - ./db/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aura} -d ${POSTGRES_DB:-aura}"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 5s
       timeout: 5s
       retries: 20
 
 volumes:
-  aura-db-data:
+  aura-mysql-data:

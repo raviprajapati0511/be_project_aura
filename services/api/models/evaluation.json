@@ -1,0 +1,356 @@
+{
+  "dataset": "EVIoT-PredictiveMaint Dataset, version 1; evenly sampled chronological records",
+  "split": "Chronological 80/20 holdout; no random row leakage across the time split.",
+  "records": 25000,
+  "source_records": 175393,
+  "sampled_records": 25000,
+  "modules": {
+    "soc_range_cnn_bilstm": {
+      "soc": {
+        "mae": 6.2074,
+        "rmse": 8.2741
+      },
+      "soc_noisy_sensor_baseline": {
+        "mae": 21.8887,
+        "rmse": 36.3006
+      },
+      "range_proxy": {
+        "mae": 30.9038,
+        "rmse": 44.492
+      },
+      "range_target_note": "Derived from SoC \u00d7 SoH \u00d7 75 kWh and reported power/speed; source has no measured range label.",
+      "train_windows": 19981,
+      "test_windows": 5000,
+      "split_note": "Chronological 80/20 split by raw record; no test target used for training or early stopping. Test windows reuse only the preceding training history.",
+      "training_seconds": 22.339
+    },
+    "isolation_forest_vs_failure_label_proxy": {
+      "precision": 0.0596,
+      "recall": 0.0267,
+      "f1": 0.0369,
+      "false_positive_rate": 0.0454
+    },
+    "threshold_baseline_vs_failure_label_proxy": {
+      "precision": 0.0969,
+      "recall": 0.3477,
+      "f1": 0.1516,
+      "false_positive_rate": 0.3489
+    },
+    "cross_domain_fusion_ablation_vs_failure_label_proxy": {
+      "precision": 0.0957,
+      "recall": 0.3539,
+      "f1": 0.1507,
+      "false_positive_rate": 0.36
+    },
+    "failure_classifier": {
+      "precision": 0.1053,
+      "recall": 0.0123,
+      "f1": 0.0221,
+      "false_positive_rate": 0.0113
+    },
+    "rul_regressor": {
+      "mae": 63.5937,
+      "rmse": 88.0858
+    },
+    "anomaly_evaluation_note": "Failure label is only a proxy for anomaly ground truth; source contains no labeled cyberattack or fault-event taxonomy.",
+    "smart_charging_dqn": {
+      "episodes": 100,
+      "dqn_mean_cost": 1.9129,
+      "raw_dqn_mean_cost": 0.0,
+      "raw_dqn_target_completion_rate": 0.0,
+      "rule_baseline_mean_cost": 1.6643,
+      "dqn_mean_peak_load": 0.7323,
+      "rule_baseline_mean_peak_load": 0.6757,
+      "dqn_mean_constraint_violations": 0.0,
+      "rule_baseline_mean_constraint_violations": 0.0,
+      "dqn_target_completion_rate": 0.55,
+      "rule_baseline_target_completion_rate": 0.34,
+      "training_seconds": 15.105,
+      "environment_note": "Reported DQN metrics include a target/peak safety shield; raw DQN results are reported separately. Synthetic tariffs/grid; not measured utility or station data."
+    },
+    "charging_session_forecaster": {
+      "Energy Consumed (kWh)": {
+        "mae": 18.5327,
+        "rmse": 22.14,
+        "r2": -0.016
+      },
+      "Charging Duration (hours)": {
+        "mae": 0.8698,
+        "rmse": 1.0203,
+        "r2": -0.017
+      },
+      "dataset": "Electric Vehicle Charging Patterns, Kaggle, Apache-2.0",
+      "rows": 1131,
+      "train_rows": 904,
+      "test_rows": 227,
+      "split": "Chronological 80/20 holdout by charging start time.",
+      "features": [
+        "Battery Capacity (kWh)",
+        "Charging Rate (kW)",
+        "State of Charge (Start %)",
+        "State of Charge (End %)",
+        "Temperature (\u00b0C)",
+        "Vehicle Age (years)",
+        "Distance Driven (since last charge) (km)",
+        "Vehicle Model",
+        "Charger Type",
+        "User Type"
+      ],
+      "targets": [
+        "Energy Consumed (kWh)",
+        "Charging Duration (hours)"
+      ],
+      "source_note": "Kaggle session dataset; forecasts are correlational estimates and not charger commands."
+    },
+    "can_intrusion_detection": {
+      "dataset": "HCRL Car-Hacking dataset, Kaggle mirror; original HCRL capture labels",
+      "source_url": "https://www.kaggle.com/datasets/pranavjha24/car-hacking-dataset",
+      "original_source": "https://sites.google.com/hksecurity.net/hcrl/Datasets/car-hacking-dataset",
+      "split": "Per-capture, per-class chronological 70/15/15; first 70% of each class train, middle 15% unused validation gap, last 15% test. This preserves later examples for rare, temporally localized attacks but is not a continuous future-stream or independent-vehicle test.",
+      "window_frames": 100,
+      "features": [
+        "message_rate_hz",
+        "mean_interarrival_ms",
+        "std_interarrival_ms",
+        "max_interarrival_ms",
+        "unique_id_count",
+        "id_entropy_bits",
+        "zero_id_fraction",
+        "dominant_id_fraction",
+        "mean_dlc",
+        "std_dlc",
+        "payload_mean",
+        "payload_std",
+        "payload_zero_fraction"
+      ],
+      "classes": [
+        "benign",
+        "dos",
+        "fuzzy",
+        "gear_spoofing",
+        "rpm_spoofing"
+      ],
+      "train_windows": 122902,
+      "test_windows": 26341,
+      "macro_f1": 0.9976,
+      "per_class_f1": {
+        "benign": 0.9993,
+        "dos": 1.0,
+        "fuzzy": 0.9962,
+        "gear_spoofing": 0.9963,
+        "rpm_spoofing": 0.9963
+      },
+      "binary_intrusion_precision": 0.9999,
+      "binary_intrusion_recall": 0.9975,
+      "binary_intrusion_f1": 0.9987,
+      "confusion_matrix": [
+        [
+          16702,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1660,
+          0,
+          0,
+          0
+        ],
+        [
+          14,
+          0,
+          1954,
+          0,
+          0
+        ],
+        [
+          4,
+          0,
+          0,
+          2856,
+          11
+        ],
+        [
+          6,
+          0,
+          0,
+          6,
+          3127
+        ]
+      ],
+      "capture_splits": {
+        "normal_run_data.txt": {
+          "windows": 9888,
+          "train_windows": 6921,
+          "validation_gap_windows": 1483,
+          "test_windows": 1484,
+          "class_splits": {
+            "benign": {
+              "windows": 9888,
+              "train_windows": 6921,
+              "validation_gap_windows": 1483,
+              "test_windows": 1484
+            }
+          },
+          "window_labels": {
+            "benign": 9888
+          }
+        },
+        "DoS_dataset.csv": {
+          "windows": 36657,
+          "train_windows": 25659,
+          "validation_gap_windows": 5499,
+          "test_windows": 5499,
+          "class_splits": {
+            "benign": {
+              "windows": 25593,
+              "train_windows": 17915,
+              "validation_gap_windows": 3839,
+              "test_windows": 3839
+            },
+            "dos": {
+              "windows": 11064,
+              "train_windows": 7744,
+              "validation_gap_windows": 1660,
+              "test_windows": 1660
+            }
+          },
+          "window_labels": {
+            "benign": 25593,
+            "dos": 11064
+          }
+        },
+        "Fuzzy_dataset.csv": {
+          "windows": 38388,
+          "train_windows": 26870,
+          "validation_gap_windows": 5759,
+          "test_windows": 5759,
+          "class_splits": {
+            "benign": {
+              "windows": 25271,
+              "train_windows": 17689,
+              "validation_gap_windows": 3791,
+              "test_windows": 3791
+            },
+            "fuzzy": {
+              "windows": 13117,
+              "train_windows": 9181,
+              "validation_gap_windows": 1968,
+              "test_windows": 1968
+            }
+          },
+          "window_labels": {
+            "benign": 25271,
+            "fuzzy": 13117
+          }
+        },
+        "RPM_dataset.csv": {
+          "windows": 46217,
+          "train_windows": 32351,
+          "validation_gap_windows": 6932,
+          "test_windows": 6934,
+          "class_splits": {
+            "benign": {
+              "windows": 25295,
+              "train_windows": 17706,
+              "validation_gap_windows": 3794,
+              "test_windows": 3795
+            },
+            "rpm_spoofing": {
+              "windows": 20922,
+              "train_windows": 14645,
+              "validation_gap_windows": 3138,
+              "test_windows": 3139
+            }
+          },
+          "window_labels": {
+            "benign": 25295,
+            "rpm_spoofing": 20922
+          }
+        },
+        "gear_dataset.csv": {
+          "windows": 44431,
+          "train_windows": 31101,
+          "validation_gap_windows": 6665,
+          "test_windows": 6665,
+          "class_splits": {
+            "benign": {
+              "windows": 25291,
+              "train_windows": 17703,
+              "validation_gap_windows": 3794,
+              "test_windows": 3794
+            },
+            "gear_spoofing": {
+              "windows": 19140,
+              "train_windows": 13398,
+              "validation_gap_windows": 2871,
+              "test_windows": 2871
+            }
+          },
+          "window_labels": {
+            "benign": 25291,
+            "gear_spoofing": 19140
+          }
+        }
+      },
+      "label_note": "Injected Flag=T messages identify attack windows; all frames in a flagged window are aggregated, so a windowed warning can precede or lag a precise injected frame.",
+      "calibration_note": "RandomForest probabilities are not calibrated confidence values; evaluate on independent vehicles/sessions before operational use."
+    }
+  },
+  "datasets": {
+    "ev_telemetry": {
+      "name": "EVIoT-PredictiveMaint",
+      "kaggle": "datasetengineer/eviot-predictivemaint-dataset",
+      "records": 25000,
+      "tasks": [
+        "SoC",
+        "range proxy",
+        "anomaly proxy",
+        "failure",
+        "RUL"
+      ]
+    },
+    "charging_sessions": {
+      "name": "Electric Vehicle Charging Patterns",
+      "kaggle": "valakhorasani/electric-vehicle-charging-patterns",
+      "license": "Apache-2.0",
+      "rows": 1131,
+      "tasks": [
+        "energy consumed",
+        "session duration"
+      ]
+    },
+    "can_security": {
+      "name": "HCRL Car-Hacking dataset",
+      "kaggle": "pranavjha24/car-hacking-dataset",
+      "license": "MIT Kaggle mirror; cite and honor original HCRL research terms",
+      "tasks": [
+        "benign/attack",
+        "DoS",
+        "fuzzy",
+        "RPM spoofing",
+        "gear spoofing"
+      ]
+    }
+  },
+  "deployment": {
+    "requests": 50,
+    "latency_mean_ms": 108.256,
+    "latency_p50_ms": 101.036,
+    "latency_p95_ms": 135.01,
+    "process_memory_mb_after_benchmark": 132.0,
+    "process_cpu_percent_during_benchmark": 185.9,
+    "hardware_note": "Local CPU benchmark; results are machine-specific and are not edge-device measurements.",
+    "training_total_seconds": 802.948,
+    "device": "CPU"
+  },
+  "limitations": [
+    "Kaggle source values are used as published and are not independently validated against vehicle hardware.",
+    "Range target is a derived proxy, not ground-truth vehicle range.",
+    "The DQN charging policy is evaluated in the synthetic Gymnasium environment; the separate charging-session regressor is evaluated on Kaggle session rows.",
+    "CAN windows are labeled from HCRL injection flags and randomly generated/vehicle-independent deployments are not represented; the temporal holdout is within the same capture files.",
+    "Cross-modal co-simulation, real BMS/charger control, independent-vehicle testing, and embedded-device benchmarks remain future validation work."
+  ]
+}

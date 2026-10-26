@@ -24,6 +24,6 @@ load_dotenv()
 
 DATABASE_URL = os.environ.get(
     "PY_DATABASE_URL",
-    os.environ.get("DATABASE_URL", "postgresql://aura:aura_dev_pw@localhost:5433/aura"),
+    os.environ.get("DATABASE_URL", "mysql://root:change_me@localhost:3306/fitness_db"),
 )
 API_PORT = int(os.environ.get("API_PORT", "8000"))

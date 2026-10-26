@@ -22,8 +22,9 @@ services/api/models/*.pkl
 services/api/models/*.pt
 services/api/models/*.zip
 
-# ml training caches
-services/api/data/
+# keep Kaggle source archive; ignore any extracted/training data
+services/api/data/*
+!services/api/data/eviot-predictivemaint-dataset.zip
 
 # OS / editor
 .DS_Store

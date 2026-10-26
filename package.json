@@ -6,13 +6,15 @@
   "scripts": {
     "setup": "npm run setup:node && npm run setup:python",
     "setup:node": "npm --prefix services/ingest install && npm --prefix services/web install",
-    "setup:python": "py -3.11 -m venv .venv && .\\.venv\\Scripts\\python -m pip install --upgrade pip && .\\.venv\\Scripts\\python -m pip install -r services/api/requirements.txt && .\\.venv\\Scripts\\python services/api/scripts/train_models.py",
+    "setup:python": "py -3.11 -m venv .venv && .\\.venv\\Scripts\\python -m pip install --upgrade pip && .\\.venv\\Scripts\\python -m pip install -r services/api/requirements.txt && .\\.venv\\Scripts\\python services/api/scripts/download_datasets.py && .\\.venv\\Scripts\\python services/api/scripts/train_models.py",
+    "data": ".\\.venv\\Scripts\\python services/api/scripts/download_datasets.py",
     "db": "docker compose up db",
     "ingest": "npm --prefix services/ingest start",
     "api": ".\\.venv\\Scripts\\python -m uvicorn app.main:app --app-dir services/api --host 0.0.0.0 --port 8000",
     "web": "npm --prefix services/web run dev",
     "sim": ".\\.venv\\Scripts\\python services/simulator/aura_simulator.py",
-    "start": "concurrently -n db,ingest,api,web,sim -c gray,cyan,green,magenta,yellow \"npm run db\" \"npm run ingest\" \"npm run api\" \"npm run web\" \"npm run sim\""
+    "start": "concurrently -n db,ingest,api,web,sim -c gray,cyan,green,magenta,yellow \"npm run db\" \"npm run ingest\" \"npm run api\" \"npm run web\" \"npm run sim\"",
+    "start:local": "concurrently -n ingest,api,web,sim -c cyan,green,magenta,yellow \"npm run ingest\" \"npm run api\" \"npm run web\" \"npm run sim\""
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
